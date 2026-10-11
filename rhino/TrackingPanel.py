@@ -15,18 +15,18 @@ import sys
 from urllib.parse import urlparse, unquote
 script_path=unquote(urlparse(__file__).path) if __file__.startswith('file:') else __file__
 if os.name=='nt' and script_path.startswith('/') and len(script_path)>2 and script_path[2]==':':script_path=script_path[1:]
-ROOT=os.environ.get('NAKEDEYE3D_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(script_path)))
-KEY='NakedEye3D.Panel'
+ROOT=os.environ.get('VIEWMOTION_ROOT') or os.path.dirname(os.path.dirname(os.path.abspath(script_path)))
+KEY='ViewMotion.Panel'
 host=None
 for assembly in System.AppDomain.CurrentDomain.GetAssemblies():
-    host_type=assembly.GetType('RhinoNakeEye3D.PanelHost.TrackingHost')
+    host_type=assembly.GetType('RhinoViewMotion.PanelHost.TrackingHost')
     if host_type:
         host=host_type.GetProperty('Pending').GetValue(None)
         if host is not None:break
 if host is not None:
     floating=scriptcontext.sticky.get(KEY)
     if floating:floating.Close()
-    KEY='NakedEye3D.DockedPanel.'+str(host.GetHashCode())
+    KEY='ViewMotion.DockedPanel.'+str(host.GetHashCode())
 if ROOT+'/rhino' not in sys.path: sys.path.insert(0,ROOT+'/rhino')
 import importlib
 import ViewportTracking as viewport_module
@@ -60,7 +60,7 @@ if existing:
         existing.BringToFront()
     else:host.Content=existing
 else:
-    demo=scriptcontext.sticky.pop('NakedEye3D.Demo',None)
+    demo=scriptcontext.sticky.pop('ViewMotion.Demo',None)
     if demo:
         demo[0].Stop(); demo[1].close()
     os.makedirs(ROOT+'/runtime',exist_ok=True)
@@ -69,7 +69,7 @@ else:
         def __init__(self):
             super().__init__()
             if host is None:
-                self.Title='裸視3D · Webcam 追蹤'
+                self.Title='ViewMotion · Webcam 追蹤'
                 self.Topmost=False
                 self.Owner=Rhino.UI.RhinoEtoApp.MainWindowForDocument(Rhino.RhinoDoc.ActiveDoc)
                 self.ClientSize=drawing.Size(229,520)
@@ -158,7 +158,10 @@ else:
                 with open(ROOT+'/runtime/panel-error.log','w') as f:f.write(traceback.format_exc())
                 self.label.Text=str(error)
 
-        def write(self):
+        def write(self,force=True):
+            now=time.monotonic()
+            if not force and now-getattr(self,"last_control_write",0)<.25:return
+            self.last_control_write=now
             self.settings['heartbeat']=time.time()
             path=ROOT+'/runtime/control.json'
             with open(path+'.tmp','w') as f: json.dump(self.settings,f)
@@ -168,7 +171,7 @@ else:
             return (zh,en,ja)[self.language.SelectedIndex]
 
         def translate(self,s,e):
-            if host is None:self.Title=self.tr('裸視3D · Webcam 追蹤','NakedEye3D · Webcam tracking','裸眼3D · Webcam トラッキング')
+            if host is None:self.Title=self.tr('ViewMotion · Webcam 追蹤','ViewMotion · Webcam tracking','裸眼3D · Webcam トラッキング')
             for control,text in [(self.camera_label,('📷 相機','📷 Cam','📷 カメラ')),
                 (self.space,('🌌 空間模式','🌌 Space','🌌 空間')),
                 (self.object,('🧸 物體模式','🧸 Object','🧸 物体')),
@@ -319,7 +322,7 @@ else:
                         if not os.path.isfile(executable):raise RuntimeError(self.tr('請先執行 Windows 安裝程式','Run the Windows setup first','先に Windows セットアップを実行してください'))
                         self.worker=subprocess.Popen([executable,os.path.join(ROOT,'tools','webcam_tracker.py'),'--client','rhino'],stdout=self.log,stderr=self.log,cwd=ROOT,creationflags=0x08000000)
                     else:
-                        self.worker=subprocess.Popen(['/usr/bin/open','-W','-n','-a',ROOT+'/tools/NakedEye3D Webcam.app'],stdout=self.log,stderr=self.log,cwd=ROOT)
+                        self.worker=subprocess.Popen(['/usr/bin/open','-W','-n','-a',ROOT+'/tools/ViewMotion Webcam.app'],stdout=self.log,stderr=self.log,cwd=ROOT)
                     self.label.Text=self.tr('正在開啟 webcam…','Opening webcam…','Webcam を起動中…')
                 self.camera.Enabled=False
                 self.refresh_tracking_button()
@@ -341,9 +344,6 @@ else:
 
         def stop(self,s,e):
             self.settings.update(stop=True,paused=True); self.write()
-            if self.worker and self.worker.poll() is None:
-                try: self.worker.wait(timeout=2)
-                except subprocess.TimeoutExpired: pass
             self.tracking.stop(True)
             self.running=False; self.camera.Enabled=True
             self.refresh_tracking_button()
@@ -353,13 +353,18 @@ else:
 
         def update(self,s,e):
             if self.worker is None or self.settings.get('stop'): return
-            self.write()
+            self.write(False)
             if not self.settings.get('paused'):
                 try: self.tracking.update()
                 except Exception as error:
                     self.pause(s,e); self.label.Text=str(error)
             try:
-                with open(ROOT+'/runtime/preview.jpg','rb') as response: data=response.read()
+                path=ROOT+'/runtime/preview.jpg'
+                stamp=os.stat(path).st_mtime_ns
+                data=b''
+                if stamp!=getattr(self,'preview_stamp',None):
+                    with open(path,'rb') as response:data=response.read()
+                    self.preview_stamp=stamp
                 if data:
                     stream=System.IO.MemoryStream(System.Array[System.Byte](data))
                     bitmap=drawing.Bitmap(stream)
@@ -392,4 +397,4 @@ else:
     else:panel.Show()
     if host is None and hasattr(panel.ControlObject,'HidesOnDeactivate'):
         panel.ControlObject.HidesOnDeactivate=True
-    print('裸視3D 控制面板已開啟')
+    print('ViewMotion 控制面板已開啟')

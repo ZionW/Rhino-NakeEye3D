@@ -15,11 +15,11 @@ while !answered {
 }
 let root = Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
 let clientArgs = Array(CommandLine.arguments.dropFirst())
-let client = clientArgs.contains("touchdesigner") ? "touchdesigner" : (clientArgs.contains("blender") ? "blender" : "rhino")
+let client = "rhino"
 let runtime = root.appendingPathComponent(client == "rhino" ? "runtime" : "runtime/" + client)
 try? FileManager.default.createDirectory(at: runtime, withIntermediateDirectories: true)
 if !allowed {
-    let status: [String: Any] = ["message": "相機權限未允許：請在系統設定 → 隱私權與安全性 → 相機，允許裸視3D Webcam", "time": Date().timeIntervalSince1970, "error": true]
+    let status: [String: Any] = ["message": "相機權限未允許：請在系統設定 → 隱私權與安全性 → 相機，允許ViewMotion Webcam", "time": Date().timeIntervalSince1970, "error": true]
     if let data = try? JSONSerialization.data(withJSONObject: status) {
         try? data.write(to: runtime.appendingPathComponent("status.json"), options: .atomic)
     }

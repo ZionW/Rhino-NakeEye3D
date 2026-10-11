@@ -249,6 +249,7 @@ def main():
         finally:
             camera.release(); face.close(); hand.close()
             server.shutdown(); server.server_close()
+    (RUNTIME / 'preview.jpg').unlink(missing_ok=True)
     status('已停止，webcam 已釋放')
 
 if __name__ == '__main__':

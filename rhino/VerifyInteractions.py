@@ -1,9 +1,9 @@
 """Rhino MCP regression: temporary assembly, exact geometry/view restoration."""
 import sys,importlib,json
 import Rhino,scriptcontext
-ROOT='/Users/zionw/Desktop/Codex/裸視3D'
+ROOT='/Users/zionw/Desktop/Codex/ViewMotion'
 if ROOT+'/rhino' not in sys.path:sys.path.insert(0,ROOT+'/rhino')
-panel=scriptcontext.sticky.get('NakedEye3D.Panel')
+panel=scriptcontext.sticky.get('ViewMotion.Panel')
 if panel:panel.Close()
 import ExplodedView,ViewportTracking
 importlib.reload(ExplodedView);importlib.reload(ViewportTracking)
@@ -97,5 +97,5 @@ finally:
     for i in selected:doc.Objects.Select(i)
     view.ActiveViewport.SetViewProjection(saved,False);saved.Dispose();view.Redraw()
 import os
-os.environ['NAKEDEYE3D_ROOT']=ROOT
+os.environ['VIEWMOTION_ROOT']=ROOT
 exec(compile(open(ROOT+'/rhino/TrackingPanel.py').read(),'TrackingPanel.py','exec'))

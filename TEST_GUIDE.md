@@ -1,10 +1,10 @@
-# Rhino 裸視3D 測試 / Rhino testing guide
+# Rhino ViewMotion 測試 / Rhino testing guide
 
 先以模型副本與透視視窗測試。Windows 安裝見 `windows/README.md`；英文見 `windows/README.en.md`。
 Use a copy of your model and activate a perspective viewport first.
 
-1. 輸入 `NakedEye3DPanel`，開始追蹤。開始時記錄目前攝影機。
-   Open `NakedEye3DPanel` and start tracking to capture the current camera baseline.
+1. 輸入 `ViewMotionPanel`，開始追蹤。開始時記錄目前攝影機。
+   Open `ViewMotionPanel` and start tracking to capture the current camera baseline.
 2. 空間模式：左右、上下、前後移動頭部；靠近物件變大，退後變小。
    Space mode: move your head sideways, vertically and forward/backward.
 3. 物體模式：拇指、食指、中指抓握，綠球出現後移動手掌旋轉攝影機。

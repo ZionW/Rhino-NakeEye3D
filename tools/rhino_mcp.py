@@ -16,7 +16,7 @@ class Client:
         self.selector.register(self.process.stderr, selectors.EVENT_READ, 'err')
         self.request_id = 0
         self.request('initialize', {'protocolVersion': '2025-03-26', 'capabilities': {},
-                     'clientInfo': {'name': 'NakedEye3D-Test', 'version': '0.1'}})
+                     'clientInfo': {'name': 'ViewMotion-Test', 'version': '0.1'}})
         self.send({'jsonrpc': '2.0', 'method': 'notifications/initialized', 'params': {}})
         return self
 

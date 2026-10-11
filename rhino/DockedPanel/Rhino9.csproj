@@ -2,18 +2,18 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <TargetExt>.rhp</TargetExt>
-    <AssemblyName>RhinoNakeEye3D.DockPanel</AssemblyName>
+    <AssemblyName>RhinoViewMotion.DockPanel</AssemblyName>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>0.2.0-beta.2</Version>
+    <Version>0.3.0-beta.1</Version>
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <RhinoSystem Condition="'$(OS)' == 'Windows_NT'">$(ProgramW6432)\Rhino 8\System</RhinoSystem>
     <RhinoSystem Condition="'$(RhinoSystem)' == ''">/Applications/RhinoWIP.app/Contents/Frameworks/RhCore.framework/Versions/A/Resources</RhinoSystem>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="PanelPlugin.cs" />
-    <EmbeddedResource Include="PanelIcon.svg" LogicalName="RhinoNakeEye3D.DockPanel.PanelIcon.svg" />
+    <EmbeddedResource Include="PanelIcon.svg" LogicalName="RhinoViewMotion.DockPanel.PanelIcon.svg" />
     <Reference Include="RhinoCommon"><HintPath>$(RhinoSystem)/RhinoCommon.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Eto"><HintPath>$(RhinoSystem)/Eto.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="System.Drawing.Common"><HintPath>$(RhinoSystem)/System.Drawing.Common.dll</HintPath><Private>false</Private></Reference>

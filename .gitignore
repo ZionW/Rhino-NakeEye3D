@@ -22,3 +22,5 @@ dist/windows-build/
 dist/yak-stage/
 dist/*.yak
 dist/yak-build/
+
+archive/

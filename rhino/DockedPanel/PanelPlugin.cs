@@ -7,14 +7,14 @@ using Rhino.UI;
 
 [assembly: Guid("49e67db1-636e-4d38-aeae-52724c1b8ad5")]
 
-namespace RhinoNakeEye3D.PanelHost;
+namespace RhinoViewMotion.PanelHost;
 
 [Guid("49e67db1-636e-4d38-aeae-52724c1b8ad5")]
 public sealed class PanelPlugin : PlugIn
 {
     protected override LoadReturnCode OnLoad(ref string errorMessage)
     {
-        Panels.RegisterPanel(this, typeof(TrackingHost), "Rhino NakeEye3D", typeof(PanelPlugin).Assembly, "RhinoNakeEye3D.DockPanel.PanelIcon.svg", PanelType.PerDoc);
+        Panels.RegisterPanel(this, typeof(TrackingHost), "Rhino ViewMotion", typeof(PanelPlugin).Assembly, "RhinoViewMotion.DockPanel.PanelIcon.svg", PanelType.PerDoc);
         return LoadReturnCode.Success;
     }
 }
@@ -35,13 +35,13 @@ public sealed class TrackingHost : Panel
     {
         if (RhinoApp.InCommand != 0) return;
         RhinoApp.Idle -= Initialize;
-        var root = Environment.GetEnvironmentVariable("NAKEDEYE3D_ROOT");
+        var root = Environment.GetEnvironmentVariable("VIEWMOTION_ROOT");
         if (string.IsNullOrEmpty(root))
         {
             var folder = new DirectoryInfo(Path.GetDirectoryName(typeof(TrackingHost).Assembly.Location)!);
             while (folder != null && !File.Exists(Path.Combine(folder.FullName, "tools", "webcam_tracker.py"))) folder = folder.Parent;
             root = folder?.FullName;
-            if (root != null) Environment.SetEnvironmentVariable("NAKEDEYE3D_ROOT", root);
+            if (root != null) Environment.SetEnvironmentVariable("VIEWMOTION_ROOT", root);
         }
         if (string.IsNullOrEmpty(root))
         {
@@ -56,7 +56,7 @@ public sealed class TrackingHost : Panel
 
 public sealed class OpenTrackingPanel : Rhino.Commands.Command
 {
-    public override string EnglishName => "NakeEye3DDockPanel";
+    public override string EnglishName => "ViewMotionPanel";
     protected override Result RunCommand(RhinoDoc doc, RunMode mode)
     {
         Panels.OpenPanel(typeof(TrackingHost).GUID);
