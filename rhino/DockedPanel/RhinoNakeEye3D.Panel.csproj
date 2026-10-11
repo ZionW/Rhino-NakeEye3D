@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <TargetExt>.rhp</TargetExt>
+    <AssemblyName>RhinoNakeEye3D.DockPanel</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>0.2.0-beta.2</Version>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RhinoSystem Condition="'$(OS)' == 'Windows_NT'">$(ProgramW6432)\Rhino 8\System</RhinoSystem>
+    <RhinoSystem Condition="'$(RhinoSystem)' == ''">/Applications/Rhino 8.app/Contents/Frameworks/RhCore.framework/Versions/A/Resources</RhinoSystem>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PanelIcon.svg" LogicalName="RhinoNakeEye3D.DockPanel.PanelIcon.svg" />
+    <Reference Include="RhinoCommon"><HintPath>$(RhinoSystem)/RhinoCommon.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Eto"><HintPath>$(RhinoSystem)/Eto.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Drawing.Common"><HintPath>$(RhinoSystem)/System.Drawing.Common.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

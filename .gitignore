@@ -1,5 +1,7 @@
 rhino/bin/
 rhino/obj/
+rhino/DockedPanel/bin/
+rhino/DockedPanel/obj/
 __pycache__/
 .venv/
 runtime/
@@ -16,3 +18,7 @@ dist/windows-build/
 **/*-verification.json
 **/*.1.toe
 **/*-test-*.png
+
+dist/yak-stage/
+dist/*.yak
+dist/yak-build/

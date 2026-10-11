@@ -11,7 +11,7 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from PIL import Image, ImageSequence
-from hand_gestures import index_only, three_finger_grasp
+from hand_gestures import index_only, three_finger_grasp, palm_pose, palm_openness, palm_scale
 
 ROOT = Path(__file__).resolve().parents[1]
 import argparse
@@ -81,7 +81,12 @@ def render_preview(frame, faces, hands, cover, object_mode=False, gripping=False
     display=cv2.resize(display,(224,168))
     preview_rgba=cv2.cvtColor(display,cv2.COLOR_BGR2RGBA).tobytes()
     ok,encoded=cv2.imencode('.jpg',display,[cv2.IMWRITE_JPEG_QUALITY,75])
-    if ok: preview=encoded.tobytes()
+    if ok:
+        preview=encoded.tobytes()
+        target=RUNTIME / "preview.jpg"
+        temp=RUNTIME / "preview.tmp"
+        temp.write_bytes(preview)
+        temp.replace(target)
 
 def status(message, **extra):
     target = RUNTIME / 'status.json'
@@ -148,7 +153,7 @@ def main():
                 if os.getppid() == 1: break
                 settings = control()
                 if settings.get('stop'): break
-                if time.time()-settings.get('heartbeat',time.time()) > 8: break
+                if time.time()-settings.get('heartbeat',time.time()) > 30: break
                 ok, frame = camera.read()
                 if not ok: raise RuntimeError('webcam 影像讀取失敗')
                 frames += 1
@@ -164,9 +169,12 @@ def main():
                 while index<len(durations)-1 and elapsed>=durations[index]:
                     elapsed-=durations[index]; index+=1
                 object_mode=settings.get('mode','space')=='object'
-                hx=hy=0.; active_index=0
+                hx=hy=hand_size=0.; active_index=0
                 sides={categories[0].category_name for categories in hands.handedness if categories[0].score>.65}
                 explosion_candidate=object_mode and sides=={'Left','Right'} and len(hands.hand_landmarks)==2 and all(index_only(p) for p in hands.hand_landmarks)
+                palm_mode=settings.get('explosion_method','two_index')=='palm'
+                pose=palm_pose(hands.hand_landmarks[0]) if palm_mode and len(hands.hand_landmarks)==1 else None
+                if palm_mode: explosion_candidate=object_mode and len(hands.hand_landmarks)==1 and (pose=='open' or (previous_explode and pose!='fist'))
                 if hands.hand_landmarks:
                     if active_side:
                         found=[i for i,c in enumerate(hands.handedness) if c[0].category_name==active_side]
@@ -176,7 +184,7 @@ def main():
                         qualifying=[i for i,p in enumerate(hands.hand_landmarks) if three_finger_grasp(p)]
                         if qualifying: active_index=qualifying[0]
                     p=hands.hand_landmarks[active_index]
-                    candidate=three_finger_grasp(p,active=grip) and not explosion_candidate
+                    candidate=three_finger_grasp(p,active=grip) and not explosion_candidate and pose!='fist'
                     if candidate and object_mode and not settings.get('paused'):
                         grip_release_since=None
                         if stable_since is None: stable_since=time.monotonic()
@@ -188,6 +196,7 @@ def main():
                         if grip_release_since is None: grip_release_since=time.monotonic()
                         if not grip or explosion_candidate or not object_mode or settings.get('paused') or time.monotonic()-grip_release_since>.18:
                             grip=False; stable_since=None; active_side=None
+                    hand_size=palm_scale(p)
                     hx=-sum(p[i].x for i in [0,5,9,13,17])/5
                     hy=-sum(p[i].y for i in [0,5,9,13,17])/5
                 else: grip=False; stable_since=None; active_side=None
@@ -196,8 +205,10 @@ def main():
                 if explosion_candidate:
                     if explode_since is None: explode_since=time.monotonic()
                     explode=time.monotonic()-explode_since>.15 and not settings.get('paused')
-                    a,b=[p[8] for p in hands.hand_landmarks]
-                    finger_distance=math.hypot(a.x-b.x,a.y-b.y)
+                    if palm_mode: finger_distance=.08+.52*palm_openness(hands.hand_landmarks[0])
+                    else:
+                        a,b=[p[8] for p in hands.hand_landmarks]
+                        finger_distance=math.hypot(a.x-b.x,a.y-b.y)
                 else: explode_since=None
                 if explode: grip=False;stable_since=None;active_side=None
                 if previous_explode and not explode: baseline=None;smooth=[0.,0.,0.]
@@ -217,7 +228,7 @@ def main():
                     if time.monotonic()-report>.25:
                         status('未偵測到臉部，視角保持不動',frames=frames); report=time.monotonic()
                     # Explicitly release camera grabbing even when the face is absent.
-                    sender.sendto(json.dumps(dict(X=0,Y=0,Z=0,Grip=False,HeadValid=False,Mode=settings.get('mode','space'))).encode(),('127.0.0.1',PORT))
+                    sender.sendto(json.dumps(dict(X=0,Y=0,Z=0,Grip=False,HeadValid=False,SmoothReturn=palm_mode,HandValid=bool(hands.hand_landmarks),Mode=settings.get('mode','space'))).encode(),('127.0.0.1',PORT))
                     continue
                 depth=1.
                 if not grip and not explode:
@@ -230,7 +241,7 @@ def main():
                     for i in range(3):
                         lower,upper=(-.25,.5) if i==2 else (-.3,.3)
                         smooth[i]+=min(.9,(.4 if i==2 else .25)*max(.2,min(3.,float(settings.get('sensitivity',1.)))))*(max(lower,min(upper,raw[i]))-smooth[i])
-                data=dict(X=smooth[0],Y=smooth[1],Z=smooth[2],Grip=grip,HandX=hx,HandY=hy,Mode=settings.get('mode','space'),Explode=explode,FingerDistance=finger_distance)
+                data=dict(SmoothReturn=palm_mode,HandValid=bool(hands.hand_landmarks),X=smooth[0],Y=smooth[1],Z=smooth[2],Grip=grip,HandX=hx,HandY=hy,HandSize=hand_size,Mode=settings.get('mode','space'),Explode=explode,FingerDistance=finger_distance)
                 sender.sendto(json.dumps(data).encode(),('127.0.0.1',PORT))
                 if time.monotonic()-report > .25:
                     status('雙食指：爆炸圖' if explode else ('三指抓握：攝影機旋轉（頭部控制暫停）' if grip else '頭部追蹤中'),frames=frames,hand=bool(hands.hand_landmarks),depth=round(depth,2),sides=list(sides))

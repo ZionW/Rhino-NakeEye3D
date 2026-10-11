@@ -1,4 +1,5 @@
 import math
+import time
 import socket
 import json
 import Rhino
@@ -14,6 +15,8 @@ class ViewportTracking:
         self.basis=None
         self.strength=1.0
         self.sensitivity=1.0
+        self.explosion_factor=3.0
+        self.return_started=None
         self.grabbing=False
         self.mode='space'
         self.explosion=None
@@ -39,6 +42,7 @@ class ViewportTracking:
         self.explosion_blocked=False
 
     def stop(self,restore=True):
+        self.return_started=None
         if self.explosion:
             self.explosion.restore();self.explosion=None;self.exploding=False
         if self.grabbing:
@@ -55,6 +59,7 @@ class ViewportTracking:
         if self.socket: self.socket.close(); self.socket=None
 
     def reset_explosion(self):
+        self.return_started=None
         if self.explosion:
             self.explosion.restore();self.explosion=None
             self.basis.Dispose()
@@ -66,7 +71,16 @@ class ViewportTracking:
         # Require release before the same held gesture may explode again.
         self.explosion_blocked=True
 
+    def advance_return(self):
+        elapsed=(time.monotonic()-self.return_started)/.7
+        if self.explosion:self.explosion.return_step(elapsed)
+        if elapsed>=1:
+            self.reset_explosion()
+        return True
+
     def update(self):
+        if self.return_started is not None:
+            self.advance_return();return
         if not self.socket: return
         data=None
         for _ in range(64):
@@ -104,10 +118,13 @@ class ViewportTracking:
             if self.explosion is None:
                 self.explosion=exploded_module.ExplodedView(Rhino.RhinoDoc.ActiveDoc,self.view)
             separation=data.get('FingerDistance',0)
-            if math.isfinite(separation): self.explosion.update(max(0,min(1,separation)))
+            if math.isfinite(separation): self.explosion.update(max(0,min(1,separation)),self.explosion_factor)
             self.exploding=True
             return
         if self.exploding:
+            if (data.get('HandValid') is False or data.get('SmoothReturn')) and self.explosion:
+                self.return_started=time.monotonic()
+                self.advance_return();return
             self.exploding=False
             # Release always returns every part and the pre-explosion camera.
             if self.explosion:
@@ -121,7 +138,20 @@ class ViewportTracking:
         if grip:
             hx,hy=data.get('HandX',0),data.get('HandY',0)
             if not all(math.isfinite(a) for a in (hx,hy)): return
+            hand_size=data.get('HandSize',0)
+            if not math.isfinite(hand_size) or hand_size<0:return
             if not self.grabbing:
+                self.hand_size_origin=hand_size
+                self.smooth_zoom=1.
+                doc=Rhino.RhinoDoc.ActiveDoc
+                objects=list(doc.Objects.GetSelectedObjects(False,False))
+                if not objects:
+                    objects=[o for o in doc.Objects.GetObjectList(Rhino.DocObjects.ObjectType.AnyObject) if not o.IsHidden and not o.IsLocked]
+                box=Rhino.Geometry.BoundingBox.Unset
+                for obj in objects:
+                    if isinstance(obj.Geometry,(Rhino.Geometry.Brep,Rhino.Geometry.Mesh,Rhino.Geometry.Extrusion,Rhino.Geometry.InstanceReferenceGeometry)):
+                        box.Union(obj.Geometry.GetBoundingBox(True))
+                if box.IsValid:self.target=box.Center
                 self.basis.Dispose()
                 self.basis=Rhino.DocObjects.ViewportInfo(self.view.ActiveViewport)
                 self.basis.UnlockCamera()
@@ -134,7 +164,13 @@ class ViewportTracking:
             yaw=-(self.smooth_hand[0]-self.hand_origin[0])*math.pi*2*self.strength
             pitch=max(-1.2,min(1.2,(self.smooth_hand[1]-self.hand_origin[1])*math.pi*2*self.strength))
             rotation=Rhino.Geometry.Transform.Rotation(yaw,self.grab_basis.CameraUp,self.target)*Rhino.Geometry.Transform.Rotation(pitch,self.grab_basis.CameraX,self.target)
-            self.basis.SetCameraLocation(rotation*self.grab_basis.CameraLocation)
+            # A larger palm means a closer hand: dolly inward, without changing FOV.
+            ratio=self.hand_size_origin/hand_size if hand_size>1e-6 and self.hand_size_origin>1e-6 else 1.
+            if abs(ratio-1)<.03:ratio=1.
+            desired=max(.35,min(2.5,1+(ratio-1)*self.strength))
+            self.smooth_zoom+=min(.8,.22*self.sensitivity)*(desired-self.smooth_zoom)
+            location=rotation*self.grab_basis.CameraLocation
+            self.basis.SetCameraLocation(self.target+(location-self.target)*self.smooth_zoom)
             self.basis.SetCameraDirection(rotation*self.grab_basis.CameraDirection)
             self.basis.SetCameraUp(rotation*self.grab_basis.CameraUp)
             self.view.ActiveViewport.SetViewProjection(self.basis,False)
