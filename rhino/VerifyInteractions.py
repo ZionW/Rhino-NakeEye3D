@@ -1,7 +1,10 @@
 """Rhino MCP regression: temporary assembly, exact geometry/view restoration."""
 import sys,importlib,json
 import Rhino,scriptcontext
-ROOT='/Users/zionw/Desktop/Codex/ViewMotion'
+from pathlib import Path
+from urllib.parse import urlparse, unquote
+script_path=unquote(urlparse(__file__).path) if __file__.startswith('file:') else __file__
+ROOT=str(Path(script_path).resolve().parents[1])
 if ROOT+'/rhino' not in sys.path:sys.path.insert(0,ROOT+'/rhino')
 panel=scriptcontext.sticky.get('ViewMotion.Panel')
 if panel:panel.Close()
