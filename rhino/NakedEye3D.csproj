@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <TargetExt>.rhp</TargetExt>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RhinoCommonPath Condition="'$(RhinoCommonPath)' == '' and '$(OS)' == 'Windows_NT'">$(ProgramW6432)\Rhino 8\System\RhinoCommon.dll</RhinoCommonPath>
+    <RhinoCommonPath Condition="'$(RhinoCommonPath)' == ''">/Applications/Rhino 8.app/Contents/Frameworks/RhCore.framework/Versions/A/Resources/RhinoCommon.dll</RhinoCommonPath>
+  </PropertyGroup>
+  <ItemGroup><Reference Include="RhinoCommon"><HintPath>$(RhinoCommonPath)</HintPath><Private>false</Private></Reference></ItemGroup>
+</Project>

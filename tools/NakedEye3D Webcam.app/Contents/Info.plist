@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>裸視3D Webcam</string>
+	<key>CFBundleExecutable</key>
+	<string>WebcamLauncher</string>
+	<key>CFBundleIdentifier</key>
+	<string>local.nakedeye3d.webcam</string>
+	<key>CFBundleName</key>
+	<string>裸視3D Webcam</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>使用 webcam 在本機追蹤頭部和手掌，以控制 Rhino 或 Blender 攝影機。影像不儲存或上傳。</string>
+</dict>
+</plist>
