@@ -1,4 +1,4 @@
-# NakedEye3D · 裸視3D
+# Rhino NakeEye3D · 裸視3D
 
 [中文](README.md) · [English](README.en.md)
 
