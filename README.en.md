@@ -2,7 +2,7 @@
 
 [中文](README.md) · [English](README.en.md)
 
-Webcam head and hand tracking for view-dependent 3D on an ordinary monitor. The project includes a Rhino plug-in, a Blender add-on and TouchDesigner demos. It provides single-viewer motion parallax, not binocular stereo. Webcam depth is an estimate; physical screen calibration is not complete.
+Webcam head and hand tracking for view-dependent 3D on an ordinary monitor. This project contains only the Rhino plug-in. It provides single-viewer motion parallax, not binocular stereo. Webcam depth is an estimate; physical screen calibration is not complete.
 
 ## Rhino features
 
@@ -39,14 +39,6 @@ python3 -m unittest discover -s tools -p 'test_hand_gestures.py'
 `rhino/TrackingPanel.py` implements the Eto floating panel. `ViewportTracking.py` handles projection and orbiting; `ExplodedView.py` restores part geometry. `tools/webcam_tracker.py` performs tracking in a separate process. The Windows bootstrap registers the panel command and resolves the project directory.
 
 On macOS, the webcam worker uses `tools/NakedEye3D Webcam.app`; rebuilding requires Python dependencies and a camera usage declaration. This macOS launcher is separate from the Windows package.
-
-## Blender and TouchDesigner
-
-- [Blender documentation](blender/README.md): `blender/nakedeye3d.zip`, the CyberApple point cloud and Fuji/Audi scene.
-- [TouchDesigner documentation](touchdesigner/README.md): CyberApple and `FujiA1-realistic.toe`.
-- [Fuji / Audi scene notes](FUJI_A1.md). Scenes are procedural demonstrations, not official track or vehicle CAD.
-
-Each application controls its own camera. Only one application can use the shared webcam at a time. This release packages the Windows Rhino version; Windows ports of the Blender and TouchDesigner integrations are not included.
 
 ## Data and third-party assets
 

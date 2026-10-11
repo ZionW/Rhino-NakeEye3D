@@ -5,7 +5,7 @@ root=Path(__file__).resolve().parents[1]
 output=root/'dist'/'NakedEye3D-Windows-Rhino8.zip'
 output.parent.mkdir(exist_ok=True)
 files=['rhino/TrackingPanel.py','rhino/ViewportTracking.py','rhino/ExplodedView.py',
-       'tools/webcam_tracker.py','tools/hand_gestures.py','tools/wave_gesture.py',
+       'tools/webcam_tracker.py','tools/hand_gestures.py',
        'models/face_landmarker.task','models/hand_landmarker.task','assets/face-cover.gif',
        'windows/Install.cmd','windows/Install.ps1','windows/requirements.txt',
        'windows/OpenPanel.py','windows/CheckSetup.cmd','windows/CheckSetup.py','windows/README.md','windows/README.en.md']

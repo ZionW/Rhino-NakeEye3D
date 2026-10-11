@@ -11,17 +11,16 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from PIL import Image, ImageSequence
-from wave_gesture import WaveDetector
 from hand_gestures import index_only, three_finger_grasp
 
 ROOT = Path(__file__).resolve().parents[1]
 import argparse
 _parser=argparse.ArgumentParser()
-_parser.add_argument('--client',default='rhino',choices=['rhino','blender','touchdesigner'])
+_parser.add_argument('--client',default='rhino',choices=['rhino'])
 _args=_parser.parse_args()
-PORT={'rhino':39539,'blender':39549,'touchdesigner':39559}[_args.client]
+PORT=39539
 PREVIEW_PORT=PORT+1
-RUNTIME = ROOT / 'runtime' if _args.client=='rhino' else ROOT / 'runtime' / _args.client
+RUNTIME = ROOT / 'runtime'
 RUNTIME.mkdir(parents=True,exist_ok=True)
 preview = b''
 preview_rgba = b''
@@ -142,7 +141,6 @@ def main():
     camera.set(cv2.CAP_PROP_FRAME_HEIGHT,480)
     baseline = None; smooth = [0.,0.,0.]; calibration = None
     frames = 0; stable_since = None; grip = False; grip_release_since = None; last_face = time.monotonic(); report = 0
-    waves=WaveDetector()
     previous_grip=False; active_side=None; mode='space'; explode_since=None; previous_explode=False
     with socket.socket(socket.AF_INET,socket.SOCK_DGRAM) as sender:
         try:
@@ -209,14 +207,12 @@ def main():
                 previous_grip=grip
                 render_preview(frame,faces,hands,covers[index],object_mode,grip,active_index)
                 if settings.get('paused'):
-                    waves=WaveDetector()
                     grip=False; stable_since=None
                     if time.monotonic()-report>.25:
                         status('已暫停追蹤（預覽持續）',frames=frames); report=time.monotonic()
                     continue
                 if calibration != settings.get('calibration'):
                     baseline = None; calibration = settings.get('calibration'); smooth = [0.,0.,0.]
-                    waves=WaveDetector()
                 if not faces.face_landmarks and not grip and not explode:
                     if time.monotonic()-report>.25:
                         status('未偵測到臉部，視角保持不動',frames=frames); report=time.monotonic()
@@ -234,15 +230,10 @@ def main():
                     for i in range(3):
                         lower,upper=(-.25,.5) if i==2 else (-.3,.3)
                         smooth[i]+=min(.9,(.4 if i==2 else .25)*max(.2,min(3.,float(settings.get('sensitivity',1.)))))*(max(lower,min(upper,raw[i]))-smooth[i])
-                positions={}
-                for landmarks,categories in zip(hands.hand_landmarks,hands.handedness):
-                    category=categories[0]
-                    if category.score>.65: positions[category.category_name]=landmarks[0].x
-                wave_id,direction=waves.update(positions,time.monotonic()) if not object_mode and settings.get('wave_enabled',True) else (0,0)
-                data=dict(X=smooth[0],Y=smooth[1],Z=smooth[2],Grip=grip,HandX=hx,HandY=hy,WaveId=wave_id,WaveDirection=direction,Mode=settings.get('mode','space'),Explode=explode,FingerDistance=finger_distance)
+                data=dict(X=smooth[0],Y=smooth[1],Z=smooth[2],Grip=grip,HandX=hx,HandY=hy,Mode=settings.get('mode','space'),Explode=explode,FingerDistance=finger_distance)
                 sender.sendto(json.dumps(data).encode(),('127.0.0.1',PORT))
                 if time.monotonic()-report > .25:
-                    status('雙食指：爆炸圖' if explode else ('三指抓握：攝影機旋轉（頭部控制暫停）' if grip else '頭部追蹤中'),frames=frames,hand=bool(hands.hand_landmarks),depth=round(depth,2),wave=wave_id,sides=list(positions))
+                    status('雙食指：爆炸圖' if explode else ('三指抓握：攝影機旋轉（頭部控制暫停）' if grip else '頭部追蹤中'),frames=frames,hand=bool(hands.hand_landmarks),depth=round(depth,2),sides=list(sides))
                     report=time.monotonic()
         finally:
             camera.release(); face.close(); hand.close()

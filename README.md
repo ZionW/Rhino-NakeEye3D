@@ -2,7 +2,7 @@
 
 [中文](README.md) · [English](README.en.md)
 
-以 webcam 追蹤頭部與手勢，控制普通螢幕上的 3D 視角。本專案包含 Rhino 外掛、Blender 外掛與 TouchDesigner 示範，提供單人觀看的頭部視差效果；不是雙眼立體顯示。單 webcam 的遠近估算尚未完成實體螢幕尺寸校正。
+以 webcam 追蹤頭部與手勢，控制普通螢幕上的 3D 視角。本專案僅包含 Rhino 外掛，提供單人觀看的頭部視差效果；不是雙眼立體顯示。單 webcam 的遠近估算尚未完成實體螢幕尺寸校正。
 
 ## Rhino 功能
 
@@ -39,14 +39,6 @@ python3 -m unittest discover -s tools -p 'test_hand_gestures.py'
 `rhino/TrackingPanel.py` 為 Eto 浮動面板，`ViewportTracking.py` 管理投影與旋轉，`ExplodedView.py` 管理零件位置，`tools/webcam_tracker.py` 為獨立追蹤程序。Windows 的 `OpenPanel.py` 會設定專案路徑與啟動指令。
 
 macOS webcam 程序使用 `tools/NakedEye3D Webcam.app`。自行重建時需準備 Python 依賴及相機用途聲明；現有本機 App 不屬於 Windows 安裝包。
-
-## Blender 與 TouchDesigner
-
-- [Blender 說明](blender/README.md)：`blender/nakedeye3d.zip` 外掛；`CyberApple.blend` 點雲蘋果與 `FujiA1.blend` 場景。
-- [TouchDesigner 說明](touchdesigner/README.md)：點雲示範，以及 `FujiA1-realistic.toe` 富士賽車場與 Audi A1 場景。
-- [場景說明](FUJI_A1.md)。場景為程序建立的示範，並非官方賽道或車輛 CAD。
-
-三套軟體各自控制攝影機，共用本機 webcam 追蹤程式；同時只有一套可以占用 webcam。Blender / TouchDesigner 的 Windows 移植尚未包含在本次 Rhino 安裝包內。
 
 ## 資料與第三方素材
 
